@@ -84,8 +84,15 @@ const onTestDisableCacheControlNoStore = () => {
 }
 
 const onComposeCache = () => {
-  http.get('/test/compose-cache').then((res: any) => {
+  http.get('/test/compose-cache', {
+    headers: {
+      "If-None-Match": etag,
+      "If-Modified-Since": lastModified
+    }
+  }).then((res: any) => {
     console.log(res)
+    etag = res.headers['etag']
+    lastModified = res.headers['last-modified']
   })
 }
 </script>

@@ -144,7 +144,7 @@ router.get('/test/compose-cache', ctx => {
   }
   ctx.set("Access-Control-Expose-Headers", "ETag");
   if(ifNoneMatch === etag) {
-    // TODO 这里有问题，指定返回状态码为304，但还是返回了200，并且还返回了body（问题已解决，是因为需要控制暴露的响应头，并且前端需要显示的在请求中带上If-None-Match）
+    console.log('走协商缓存')
     ctx.status = 304;
   } else {
     ctx.body = body;
