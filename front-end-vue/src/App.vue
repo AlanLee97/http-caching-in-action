@@ -84,15 +84,20 @@ const onTestDisableCacheControlNoStore = () => {
 }
 
 const onComposeCache = () => {
-  http.get('/test/compose-cache', {
-    headers: {
-      "If-None-Match": etag,
-      "If-Modified-Since": lastModified
-    }
-  }).then((res: any) => {
+  const headers = {} as any
+  if(etag) headers["If-None-Match"] = etag;
+  if(lastModified) headers["If-Modified-Since"] = lastModified;
+
+  http.get('/test/compose-cache', {headers}).then((res: any) => {
     console.log(res)
     etag = res.headers['etag']
     lastModified = res.headers['last-modified']
+  })
+}
+
+const onComposeCache1 = () => {
+  http.get('/test/compose-cache/compose-1').then((res: any) => {
+    console.log(res)
   })
 }
 </script>
@@ -100,6 +105,7 @@ const onComposeCache = () => {
 <template>
   <div>
     <div class="btn-area">
+      <h2>缓存类型</h2>
       <button @click="onTestCacheControlMaxAge()">Cache-Control: max-age</button>
       <button @click="onTestExpires">Expire</button>
       <button @click="onLastModified">If-Modified-Since / Last-Modified</button>
@@ -107,6 +113,7 @@ const onComposeCache = () => {
 
       <h2>缓存组合</h2>
       <button @click="onComposeCache">Cache-Control + Expires / Last-Modified + Etag</button>
+      <button @click="onComposeCache1">Cache-Control + Expires</button>
 
       <h2>禁用缓存</h2>
       <button @click="onTestCacheControlMaxAge('0')">Disable Cache-Control: max-age=0</button>

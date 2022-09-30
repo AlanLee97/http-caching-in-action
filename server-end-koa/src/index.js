@@ -122,8 +122,19 @@ router.get('/test/cache-control/no-store', ctx => {
 
 // todo
 router.get('/test/compose-cache', ctx => {
-  ctx.set('Cache-Control', 'max-age=3600');
   ctx.set('Expires', new Date(new Date().getTime() + 5 * 1000).toGMTString());
+  ctx.set('Cache-Control', 'max-age=60');
+  console.log('headers', ctx.headers['cache-control'])
+  // if(ctx.headers['cache-control'] === 'max-age=0') {
+  //   ctx.body = {
+  //     code: 0,
+  //     msg: 'ok',
+  //     data: {
+  //       msg: 'Test compose-cache'
+  //     }
+  //   };
+  //   return;
+  // }
 
   const fs = require('fs');
   const file =  fs.readFileSync(__dirname + '/test.txt', 'utf-8');
@@ -145,6 +156,54 @@ router.get('/test/compose-cache', ctx => {
   ctx.set("Access-Control-Expose-Headers", "ETag");
   if(ifNoneMatch === etag) {
     console.log('走协商缓存')
+    ctx.status = 304;
+  } else {
+    ctx.body = body;
+  }
+});
+
+router.get('/test/compose-cache/compose-1', ctx => {
+  ctx.set('Expires', new Date(new Date().getTime() + 5 * 1000).toGMTString()); // 5秒过期
+  ctx.set('Cache-Control', 'max-age=60'); // 60秒过期
+
+  const body = {
+    code: 0,
+    msg: 'ok',
+    data: {
+      msg: 'Test compose-cache/compose-1'
+    }
+  }
+  ctx.body = body;
+});
+
+router.get('/test/compose-cache/compose-2', ctx => {
+  const fs = require('fs');
+  const file =  fs.readFileSync(__dirname + '/test.txt', 'utf-8');
+  const { getFileHash } = require('./util/index');
+  const etag = getFileHash({file}).slice(0, 8);
+  const ifNoneMatch = ctx.request.header['if-none-match'];
+  ctx.set('ETag', etag);
+
+  const fileStat =  fs.statSync(__dirname + '/test.txt');
+  const lastModified = new Date(fileStat.mtime).toGMTString();
+  const ifModifiedSince = ctx.request.header['if-modified-since'];
+
+  ctx.set('Last-Modified', lastModified);
+
+  const body = {
+    code: 0,
+    msg: 'ok',
+    data: {
+      msg: 'Test compose-cache/compose-2'
+    }
+  }
+
+  ctx.set("Access-Control-Expose-Headers", "ETag");
+
+  if(ifNoneMatch === etag) {
+    console.log('走协商缓存');
+    ctx.status = 304;
+  } else if(lastModified === ifModifiedSince) {
     ctx.status = 304;
   } else {
     ctx.body = body;
