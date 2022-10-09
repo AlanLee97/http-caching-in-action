@@ -9,20 +9,9 @@ const router = new Router();
 
 app.use(router.routes()).use(router.allowedMethods());
 
-router.get('/test/cache-control/max-age', ctx => {
-  ctx.set('Cache-Control', 'max-age=86400');
-  ctx.body = {
-    code: 0,
-    msg: 'ok',
-    data: {
-      ctx,
-      msg: 'Test Cache-Control'
-    }
-  }
-});
 
+// 强缓存
 router.get('/test/cache-control/max-age/:age', ctx => {
-  console.log('params', ctx.params)
   const { age } = ctx.params;
   ctx.set('Cache-Control', 'max-age=' + (age ? age : 86400));
   ctx.body = {
@@ -48,10 +37,12 @@ router.get('/test/expires', ctx => {
   }
 });
 
+
+// 协商缓存
 router.get('/test/last-modified', ctx => {
   const fs = require('fs')
-  const file =  fs.readFileSync(__dirname + '/test.txt', 'utf-8');
-  const fileStat =  fs.statSync(__dirname + '/test.txt');
+  const file =  fs.readFileSync(__dirname + '/style.css', 'utf-8');
+  const fileStat =  fs.statSync(__dirname + '/style.css');
   const lastModified = new Date(fileStat.mtime).toGMTString();
   const ifModifiedSince = ctx.request.header['if-modified-since'];
   ctx.set('Last-Modified', lastModified);
@@ -73,7 +64,7 @@ router.get('/test/last-modified', ctx => {
 
 router.get('/test/etag', ctx => {
   const fs = require('fs');
-  const file =  fs.readFileSync(__dirname + '/test.txt', 'utf-8');
+  const file =  fs.readFileSync(__dirname + '/style.css', 'utf-8');
   const { getFileHash } = require('./util/index');
   const etag = getFileHash({file}).slice(0, 8);
   const ifNoneMatch = ctx.request.header['if-none-match'];
@@ -98,70 +89,8 @@ router.get('/test/etag', ctx => {
   }
 });
 
-router.get('/test/cache-control/no-cache', ctx => {
-  ctx.set('Cache-Control', 'no-cache');
-  ctx.body = {
-    code: 0,
-    msg: 'ok',
-    data: {
-      msg: 'Test Cache-Control: no-cache'
-    }
-  }
-});
 
-router.get('/test/cache-control/no-store', ctx => {
-  ctx.set('Cache-Control', 'no-store');
-  ctx.body = {
-    code: 0,
-    msg: 'ok',
-    data: {
-      msg: 'Test Cache-Control: no-store'
-    }
-  }
-});
-
-// todo
-router.get('/test/compose-cache', ctx => {
-  ctx.set('Expires', new Date(new Date().getTime() + 5 * 1000).toGMTString());
-  ctx.set('Cache-Control', 'max-age=60');
-  console.log('headers', ctx.headers['cache-control'])
-  // if(ctx.headers['cache-control'] === 'max-age=0') {
-  //   ctx.body = {
-  //     code: 0,
-  //     msg: 'ok',
-  //     data: {
-  //       msg: 'Test compose-cache'
-  //     }
-  //   };
-  //   return;
-  // }
-
-  const fs = require('fs');
-  const file =  fs.readFileSync(__dirname + '/test.txt', 'utf-8');
-  const { getFileHash } = require('./util/index');
-  const etag = getFileHash({file}).slice(0, 8);
-  const ifNoneMatch = ctx.request.header['if-none-match'];
-  ctx.set('ETag', etag);
-
-  const fileStat =  fs.statSync(__dirname + '/test.txt');
-  const lastModified = new Date(fileStat.mtime).toGMTString();
-  ctx.set('Last-Modified', lastModified);
-  const body = {
-    code: 0,
-    msg: 'ok',
-    data: {
-      msg: 'Test compose-cache'
-    }
-  }
-  ctx.set("Access-Control-Expose-Headers", "ETag");
-  if(ifNoneMatch === etag) {
-    console.log('走协商缓存')
-    ctx.status = 304;
-  } else {
-    ctx.body = body;
-  }
-});
-
+// 缓存组合
 router.get('/test/compose-cache/compose-1', ctx => {
   ctx.set('Expires', new Date(new Date().getTime() + 5 * 1000).toGMTString()); // 5秒过期
   ctx.set('Cache-Control', 'max-age=60'); // 60秒过期
@@ -178,13 +107,13 @@ router.get('/test/compose-cache/compose-1', ctx => {
 
 router.get('/test/compose-cache/compose-2', ctx => {
   const fs = require('fs');
-  const file =  fs.readFileSync(__dirname + '/test.txt', 'utf-8');
+  const file =  fs.readFileSync(__dirname + '/style.css', 'utf-8');
   const { getFileHash } = require('./util/index');
   const etag = getFileHash({file}).slice(0, 8);
   const ifNoneMatch = ctx.request.header['if-none-match'];
   ctx.set('ETag', etag);
 
-  const fileStat =  fs.statSync(__dirname + '/test.txt');
+  const fileStat =  fs.statSync(__dirname + '/style.css');
   const lastModified = new Date(fileStat.mtime).toGMTString();
   const ifModifiedSince = ctx.request.header['if-modified-since'];
 
@@ -200,6 +129,7 @@ router.get('/test/compose-cache/compose-2', ctx => {
 
   ctx.set("Access-Control-Expose-Headers", "ETag");
 
+  // 优先校验etag
   if(ifNoneMatch === etag) {
     console.log('走协商缓存');
     ctx.status = 304;
@@ -207,6 +137,44 @@ router.get('/test/compose-cache/compose-2', ctx => {
     ctx.status = 304;
   } else {
     ctx.body = body;
+  }
+});
+
+
+// 禁用缓存
+router.get('/test/disable/cache-control/no-cache', ctx => {
+  ctx.set('Cache-Control', 'no-cache');
+  ctx.body = {
+    code: 0,
+    msg: 'ok',
+    data: {
+      msg: 'Test Cache-Control: no-cache'
+    }
+  }
+});
+
+router.get('/test/disable/cache-control/no-store', ctx => {
+  ctx.set('Cache-Control', 'no-store');
+  ctx.body = {
+    code: 0,
+    msg: 'ok',
+    data: {
+      msg: 'Test Cache-Control: no-store'
+    }
+  }
+});
+
+router.get('/test/disable/cache-control/max-age/:age', ctx => {
+  console.log('params', ctx.params)
+  const { age } = ctx.params;
+  ctx.set('Cache-Control', 'max-age=' + (age ? age : 86400));
+  ctx.body = {
+    code: 0,
+    msg: 'ok',
+    data: {
+      ctx,
+      msg: 'Test Cache-Control'
+    }
   }
 });
 
