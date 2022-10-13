@@ -107,6 +107,11 @@ router.get('/test/compose-cache/compose-1', ctx => {
 
 // Cache-Control + Expires + ETag + Last-Modified
 router.get('/test/compose-cache/compose-2', ctx => {
+  // 强缓存
+  ctx.set('Expires', new Date(new Date().getTime() + 5 * 1000).toGMTString()); // 5秒过期
+  ctx.set('Cache-Control', 'max-age=10'); // 10秒过期
+
+  // 协商缓存
   const fs = require('fs');
   const file =  fs.readFileSync(__dirname + '/style.css', 'utf-8');
   const { getFileHash } = require('./util/index');
