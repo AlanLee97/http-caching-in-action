@@ -117,7 +117,7 @@ const onComposeCache2 = () => {
       <h2>缓存类型</h2>
       <h4>强缓存</h4>
       <button @click="onCacheControlMaxAge">Cache-Control: max-age</button>
-      <button @click="onExpires">Expire</button>
+      <button @click="onExpires">Expires</button>
       <h4>协商缓存</h4>
       <button @click="onLastModified">If-Modified-Since / Last-Modified</button>
       <button @click="onEtag">If-None-Match / Etag</button>

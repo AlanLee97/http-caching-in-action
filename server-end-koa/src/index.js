@@ -32,7 +32,7 @@ router.get('/test/expires', ctx => {
     msg: 'ok',
     data: {
       msg: 'Test Expires',
-      expires: new Date('2022-09-21').toGMTString()
+      expires: new Date(new Date().getTime() + 5 * 1000).toGMTString()
     }
   }
 });
@@ -73,7 +73,7 @@ router.get('/test/etag', ctx => {
     msg: 'ok',
     data: {
       msg: 'Test ETag',
-      fileContent: '123',
+      fileContent: file,
       etag,
       ifNoneMatch
     }
@@ -90,9 +90,10 @@ router.get('/test/etag', ctx => {
 
 
 // 缓存组合
+// Cache-Control + Expires
 router.get('/test/compose-cache/compose-1', ctx => {
   ctx.set('Expires', new Date(new Date().getTime() + 5 * 1000).toGMTString()); // 5秒过期
-  ctx.set('Cache-Control', 'max-age=60'); // 60秒过期
+  ctx.set('Cache-Control', 'max-age=10'); // 10秒过期
 
   const body = {
     code: 0,
@@ -104,6 +105,7 @@ router.get('/test/compose-cache/compose-1', ctx => {
   ctx.body = body;
 });
 
+// Cache-Control + Expires + ETag + Last-Modified
 router.get('/test/compose-cache/compose-2', ctx => {
   const fs = require('fs');
   const file =  fs.readFileSync(__dirname + '/style.css', 'utf-8');
