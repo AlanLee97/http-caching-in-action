@@ -13,7 +13,7 @@ app.use(router.routes()).use(router.allowedMethods());
 // 强缓存
 router.get('/test/cache-control/max-age/:age', ctx => {
   const { age } = ctx.params;
-  ctx.set('Cache-Control', 'max-age=' + (age ? age : 86400));
+  ctx.set('Cache-Control', 'max-age=' + (age ? age : 86400)); // 1天
   ctx.body = {
     code: 0,
     msg: 'ok',
@@ -82,7 +82,6 @@ router.get('/test/etag', ctx => {
   ctx.set("Access-Control-Expose-Headers", "ETag");
   ctx.set('ETag', etag);
   if(ifNoneMatch === etag) {
-    // TODO 这里有问题，指定返回状态码为304，但还是返回了200，并且还返回了body（问题已解决，是因为需要控制暴露的响应头，并且前端需要显示的在请求中带上If-None-Match）
     ctx.status = 304;
   } else {
     ctx.body = body;
